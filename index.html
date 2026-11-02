@@ -205,10 +205,18 @@ function uniqueOptions(answer,wrong) {
 function pairedLastDigitOptions(answer) {
   return shuffled([answer,answer+10,answer+1,answer+11].map(String));
 }
+function numericOptions(answer) {
+  const wrong = new Set();
+  while (wrong.size < 3) {
+    const offset = randInt(1, Math.max(12, Math.ceil(Math.abs(answer) * 0.2)));
+    wrong.add(String(answer + (Math.random() < 0.5 ? -offset : offset)));
+  }
+  return shuffled([String(answer), ...wrong]);
+}
 function generateQuestion() {
   const type=randInt(1,6);
-  if(type===1) { const a=randInt(10,99),b=randInt(10,99),v=a+b; return {q:`${a} + ${b} = ?`,a:String(v),opts:pairedLastDigitOptions(v)}; }
-  if(type===2) { const a=randInt(10,99),b=randInt(10,99),v=Math.max(a,b),w=Math.min(a,b),ans=v-w; return {q:`${v} − ${w} = ?`,a:String(ans),opts:pairedLastDigitOptions(ans)}; }
+  if(type===1) { const a=randInt(10,99),b=randInt(10,99),v=a+b; return {q:`${a} + ${b} = ?`,a:String(v),opts:numericOptions(v)}; }
+  if(type===2) { const a=randInt(10,99),b=randInt(10,99),v=Math.max(a,b),w=Math.min(a,b),ans=v-w; return {q:`${v} − ${w} = ?`,a:String(ans),opts:numericOptions(ans)}; }
   if(type===3) { const a=randInt(10,99),b=randInt(10,99),v=a*b; return {q:`${a} × ${b} = ?`,a:String(v),opts:pairedLastDigitOptions(v)}; }
   if(type===4) {
     const a=randInt(-9,9)||2,b=randInt(-9,9)||3,sum=a+b,prod=a*b,ans=`${factorText(a)}${factorText(b)}`;
