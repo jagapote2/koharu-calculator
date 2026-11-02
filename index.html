@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>こはるで計算</title>
+<style>
+:root {
+  --site-primary: #3988D6;
+  --site-secondary: #B9E2FF;
+  --site-background: #DDF2FF;
+  --site-on-primary: #FFFFFF;
+  --site-on-secondary: #174C80;
+  --site-on-background: #17436D;
+  --site-font-body: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  --site-font-heading: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  color-scheme: light dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--site-font-body); }
+#app {
+  min-height: 100vh;
+  width: 100%;
+  border-radius: 0;
+  background-color: var(--site-background);
+  color: var(--site-on-background);
+  padding: calc(28px * var(--site-spacing-scale)) 18px calc(36px * var(--site-spacing-scale));
+  position: relative;
+  overflow: hidden;
+}
+#app::before, #app::after { content:""; position:absolute; border-radius:50%; background:var(--site-secondary); opacity:calc(.35 * var(--site-decoration-opacity)); pointer-events:none; }
+#app::before { width:260px; height:260px; top:-120px; right:-85px; }
+#app::after { width:190px; height:190px; bottom:-105px; left:-80px; }
+.shell { width:min(100%, 680px); margin:0 auto; position:relative; z-index:1; }
+header { text-align:center; margin-bottom:26px; }
+.brand { font-family:var(--site-font-heading); font-size:calc(36px * var(--site-heading-scale)); font-weight:900; letter-spacing:.04em; color:var(--site-on-background); margin:0; }
+.subtitle { margin:8px 0 0; font-size:14px; font-weight:700; color:#3678B6; min-height:1.5em; }
+.mode-label { display:inline-block; background:var(--site-secondary); color:var(--site-on-secondary); border-radius:999px; padding:7px 15px; font-size:13px; font-weight:800; margin:0 auto 18px; }
+.panel { background:light-dark(#FFFFFF,#172B3C); color:light-dark(#17436D,#E6F4FF); border:1px solid light-dark(#C5E3F8,#35566D); border-radius:calc(24px * var(--site-radius-scale)); padding:calc(24px * var(--site-spacing-scale)); box-shadow:0 8px 22px rgba(35,104,160,.08); }
+.home-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:24px; }
+.mode-card { border:0; border-radius:calc(20px * var(--site-radius-scale)); background:var(--site-primary); color:var(--site-on-primary); min-height:150px; padding:20px 14px; cursor:pointer; text-align:left; box-shadow:0 6px 0 #2469AE; transition:transform .16s ease, filter .16s ease; }
+.mode-card:hover, .action:hover, .choice:hover { transform:scale(1.025); filter:brightness(1.03); }
+.mode-card:active, .action:active, .choice:active { transform:scale(.975); }
+.mode-card strong { display:block; font-size:19px; margin-bottom:10px; }
+.mode-card span { font-size:12px; line-height:1.7; opacity:.95; }
+.section-title { font-size:16px; font-weight:900; margin:28px 0 12px; }
+.records { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.record { background:light-dark(rgba(255,255,255,.78),rgba(23,43,60,.85)); border:1px solid light-dark(#C5E3F8,#35566D); border-radius:16px; padding:15px; }
+.record small { display:block; opacity:.78; font-weight:700; margin-bottom:5px; }
+.record b { font-size:22px; }
+.record b small { display:inline; font-size:12px; opacity:.75; }
+.record-time { display:block; margin-top:7px; font-size:13px; font-weight:800; color:#397EB9; }
+.today-date { text-align:left; font-size:12px; font-weight:800; color:#397EB9; margin:0 0 8px; }
+.kicker { text-align:center; font-weight:800; color:#397EB9; margin:0 0 18px; }
+.question { text-align:center; font-size:clamp(29px,7vw,43px); font-weight:900; letter-spacing:.02em; padding:22px 4px 26px; overflow-wrap:anywhere; }
+.choices { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.choice { min-height:66px; border:2px solid #3988D6; border-radius:16px; background:light-dark(#FFFFFF,#1B3448); color:light-dark(#245B91,#EAF6FF); font-size:clamp(18px,4vw,24px); font-weight:900; cursor:pointer; transition:transform .16s ease, background .16s ease; }
+.choice.correct { background:#DDF7E5; border-color:#24A45A; color:#126B37; }
+.choice.wrong { background:#FFE1E1; border-color:#D94A4A; color:#A51F1F; }
+.choice:disabled { cursor:default; transform:none; filter:none; }
+.question-count { text-align:center; font-size:18px; font-weight:900; margin:23px 0 0; color:#245B91; }
+.feedback { text-align:center; min-height:28px; margin:14px 0 0; font-weight:900; font-size:18px; }
+.action-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:22px; }
+.action { border:0; border-radius:15px; padding:14px 24px; background:var(--site-primary); color:var(--site-on-primary); font-weight:900; font-size:15px; cursor:pointer; transition:transform .16s ease, filter .16s ease; box-shadow:0 4px 0 #2469AE; }
+.action.secondary { background:light-dark(#FFFFFF,#1B3448); color:light-dark(#245B91,#EAF6FF); border:2px solid #3988D6; box-shadow:none; }
+.result-title { text-align:center; font-size:calc(28px * var(--site-heading-scale)); font-weight:900; margin:0 0 20px; }
+.result-card { text-align:center; padding:25px 18px; }
+.result-heading { font-size:19px; font-weight:900; margin-bottom:5px; }
+.big-score { font-size:clamp(48px,12vw,68px); line-height:1.15; font-weight:1000; color:#245F9B; }
+.big-score small { font-size:20px; }
+.percent { font-size:21px; font-weight:900; margin-top:10px; }
+.new-record { color:#D18A13; font-size:30px; font-weight:1000; margin-bottom:10px; }
+.best-label { border-top:1px solid light-dark(#C5E3F8,#35566D); margin-top:20px; padding-top:17px; font-weight:800; }
+.best-score { font-size:30px; font-weight:1000; color:#245F9B; margin-top:4px; }
+.note { font-size:12px; opacity:.72; text-align:center; margin-top:16px; line-height:1.7; }
+.daily-setup { margin-top:18px; }
+.daily-setup label { display:flex; justify-content:space-between; align-items:center; font-weight:900; margin-bottom:12px; }
+.daily-setup input[type="range"] { width:100%; accent-color:var(--site-primary); }
+.daily-status { text-align:center; font-size:13px; font-weight:800; margin-top:10px; }
+.mode-card:disabled { opacity:.55; cursor:not-allowed; transform:none; filter:none; box-shadow:none; }
+.hidden { display:none !important; }
+@media (max-width:480px) { #app { padding-left:14px; padding-right:14px; } .home-grid { grid-template-columns:1fr; } .mode-card { min-height:112px; } .panel { padding:19px; } }
+@media (prefers-color-scheme: dark) {
+  .subtitle, .kicker, .question-count { color:#9BD2FF; }
+  .big-score, .best-score { color:#9BD2FF; }
+}
+</style>
+</head>
+<body>
+<main id="app">
+  <div class="shell">
+    <div class="today-date" id="todayDate"></div>
+    <header>
+      <h1 class="brand">こはるで計算</h1>
+      <p class="subtitle" id="subtitle"></p>
+    </header>
+
+    <section id="home">
+      <div class="home-grid">
+        <button class="mode-card" id="dailyStart"><strong>デイリーモード</strong><span>1日1回の挑戦！<br>問題数を選んで記録に挑もう</span></button>
+        <button class="mode-card" id="challengeStart"><strong>チャレンジモード</strong><span>間違えるまで続けよう！<br>連続正解の自己ベストに挑戦</span></button>
+      </div>
+      <div class="panel daily-setup hidden" id="dailySetup">
+        <label for="dailyQuestionRange"><span>今日の問題数</span><strong><span id="dailyQuestionValue">5</span>問</strong></label>
+        <input id="dailyQuestionRange" type="range" min="5" max="15" step="1" value="5">
+        <div class="daily-status" id="dailyStatus">1日1回、今日の挑戦に取り組もう！</div>
+        <div class="action-row"><button class="action" id="dailyBegin">この問題数で挑戦</button></div>
+      </div>
+      <h2 class="section-title">記録</h2>
+      <div class="records">
+        <div class="record"><small>デイリー・最新の成績</small><b><span id="dailyRecord">--</span><small id="dailyRecordSuffix"> / --問</small></b><span class="record-time" id="dailyRecordTime">タイム --</span></div>
+        <div class="record"><small>チャレンジ・自己ベスト</small><b><span id="challengeRecord">0</span><small>問</small></b></div>
+      </div>
+      <p class="note">記録はこのブラウザ内に保存されます。</p>
+    </section>
+
+    <section id="play" class="hidden">
+      <div class="kicker" id="modeName">デイリーモード</div>
+      <div class="panel">
+        <p class="kicker">次の計算を解こう！</p>
+        <div class="question" id="question">24 × 13 = ?</div>
+        <div class="choices" id="choices"></div>
+        <p class="feedback" id="feedback" aria-live="polite"></p>
+      </div>
+      <div class="question-count" id="questionCount">第 1 問 / 10 問</div>
+      <div class="action-row hidden" id="nextRow"><button class="action" id="nextButton">次の問題へ</button></div>
+    </section>
+
+    <section id="dailyResult" class="hidden">
+      <h2 class="result-title">結果発表！</h2>
+      <div class="panel result-card">
+        <div class="result-heading" id="dailyDateHeading">11月2日の成績</div>
+        <div class="big-score"><span id="dailyScore">8</span><small> / <span id="dailyTotal">5</span>問</small></div>
+        <div class="percent">正答率 <span id="dailyPercent">80</span>%</div>
+        <div class="percent">タイム <span id="dailyTime">--</span></div>
+      </div>
+      <div class="action-row"><button class="action" id="dailyHome">ホームへ戻る</button></div>
+    </section>
+
+    <section id="challengeResult" class="hidden">
+      <h2 class="result-title">チャレンジ終了！</h2>
+      <div class="panel result-card">
+        <div class="result-heading" id="challengeHeading">今回の記録</div>
+        <div class="big-score"><span id="challengeScore">15</span><small>問</small></div>
+        <div class="best-label">自己ベスト</div>
+        <div class="best-score"><span id="bestScore">20</span>問</div>
+      </div>
+      <div class="action-row"><button class="action" id="challengeAgain">もう一度挑戦</button><button class="action secondary" id="challengeHome">ホームへ戻る</button></div>
+    </section>
+  </div>
+</main>
+<script>
+const normalMessages = [
+  "計算、極めよう", "昨日の自分を超えよう", "今日もやってんね！", "土台つくってこう", "通学中にも、どうぞ",
+  "アクマで計算", "あいつを超えてやれ", "東大目指しちゃう？", "寝たいときは、寝よう", "ゲーム感覚でどうぞ"
+];
+const specialMessages = {
+  "1-1":"あけましておめでとう！", "2-14":"ハッピーバレンタイン！", "3-14":"ハッピーホワイトデー！",
+  "5-10":"祝こは誕", "8-7":"おめ", "8-31":"FGノートてなんすか？？",
+  "10-31":"ハッピーハロウィン！", "12-24":"フォフォフォ", "12-25":"フォッフォッフォッ", "12-31":"良いお年をー！"
+};
+function getSubtitle() {
+  const d = new Date(); const key = `${d.getMonth()+1}-${d.getDate()}`;
+  if (specialMessages[key]) return specialMessages[key];
+  if (d.getMonth() === 1 && d.getDate() === 3) return "鬼は外！福は内！";
+  const holidays = {"1-成人の日":"成人の日", "2-建国記念の日":"建国記念の日"};
+  const fixed = {"1-1":"元日","2-11":"建国記念の日","2-23":"天皇誕生日","4-29":"昭和の日","5-3":"憲法記念日","5-4":"みどりの日","5-5":"こどもの日","8-11":"山の日","11-3":"文化の日","11-23":"勤労感謝の日"};
+  if (fixed[key]) return `今日は${fixed[key]}！`;
+  if (d.getDay() === 0) return "一週間お疲れ様！";
+  let last = JSON.parse(localStorage.getItem('koharu_recent_messages') || '[]');
+  let candidates = normalMessages.filter(m => !last.includes(m));
+  if (!candidates.length) candidates = normalMessages;
+  const seed = `${d.getFullYear()}-${key}`;
+  let hash = 0; for (const c of seed) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
+  const message = candidates[hash % candidates.length];
+  // 日付ごとに同じ文言を表示し、直近5日分を避ける
+  const saved = JSON.parse(localStorage.getItem('koharu_daily_message') || '{}');
+  if (saved.date === seed) return saved.message;
+  last = [message, ...last].slice(0,5);
+  localStorage.setItem('koharu_recent_messages', JSON.stringify(last));
+  localStorage.setItem('koharu_daily_message', JSON.stringify({date:seed,message}));
+  return message;
+}
+document.getElementById('subtitle').textContent = getSubtitle();
+const $ = id => document.getElementById(id);
+const screens = ['home','play','dailyResult','challengeResult'];
+function showScreen(id) { screens.forEach(s => $(s).classList.toggle('hidden', s !== id)); }
+function read(key, fallback) { try { const v=localStorage.getItem(key); return v===null?fallback:JSON.parse(v); } catch { return fallback; } }
+function write(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+let mode='daily', questionIndex=0, correctCount=0, challengeStreak=0, currentQuestion=null, answered=false, dailyTotal=5, dailyStartedAt=0;
+function formatTime(seconds) { return `${Number(seconds).toFixed(1)}秒`; }
+function randInt(min,max) { return Math.floor(Math.random()*(max-min+1))+min; }
+function shuffled(arr) { const out=[...arr]; for(let i=out.length-1;i>0;i--){const j=randInt(0,i);[out[i],out[j]]=[out[j],out[i]];} return out; }
+function signedTerm(n,suffix='') { return n<0?` − ${Math.abs(n)}${suffix}`:` + ${n}${suffix}`; }
+function factorText(n) { return `(x ${n<0?'−':'+'} ${Math.abs(n)})`; }
+function uniqueOptions(answer,wrong) {
+  const list=[...new Set(wrong.filter(v=>v!==answer))];
+  while(list.length<3) { const candidate=`${answer} `; const extra=randInt(1,99); const value=candidate+`（別解候補${extra}）`; if(!list.includes(value)) list.push(value); }
+  return shuffled([answer,...list.slice(0,3)]);
+}
+function pairedLastDigitOptions(answer) {
+  return shuffled([answer,answer+10,answer+1,answer+11].map(String));
+}
+function generateQuestion() {
+  const type=randInt(1,6);
+  if(type===1) { const a=randInt(10,99),b=randInt(10,99),v=a+b; return {q:`${a} + ${b} = ?`,a:String(v),opts:pairedLastDigitOptions(v)}; }
+  if(type===2) { const a=randInt(10,99),b=randInt(10,99),v=Math.max(a,b),w=Math.min(a,b),ans=v-w; return {q:`${v} − ${w} = ?`,a:String(ans),opts:pairedLastDigitOptions(ans)}; }
+  if(type===3) { const a=randInt(10,99),b=randInt(10,99),v=a*b; return {q:`${a} × ${b} = ?`,a:String(v),opts:pairedLastDigitOptions(v)}; }
+  if(type===4) {
+    const a=randInt(-9,9)||2,b=randInt(-9,9)||3,sum=a+b,prod=a*b,ans=`${factorText(a)}${factorText(b)}`;
+    const q=`x²${sum?signedTerm(sum,'x'):''}${prod?signedTerm(prod):''} を因数分解すると？`;
+    return {q,a:ans,opts:uniqueOptions(ans,[`${factorText(a+1)}${factorText(b)}`,`${factorText(a)}${factorText(b+1)}`,`${factorText(-a)}${factorText(-b)}`])};
+  }
+  if(type===5) {
+    const a=randInt(-9,9)||2,b=randInt(-9,9)||3,sum=a+b,prod=a*b;
+    const q=`${factorText(a)}${factorText(b)} を展開すると？`,ans=`x²${sum?signedTerm(sum,'x'):''}${prod?signedTerm(prod):''}`;
+    return {q,a:ans,opts:uniqueOptions(ans,[`x²${signedTerm(sum+1,'x')}${signedTerm(prod)}`,`x²${signedTerm(sum,'x')}${signedTerm(prod+1)}`,`x²${signedTerm(a*b,'x')}${signedTerm(sum)}`])};
+  }
+  const n=randInt(2,9),plus=Math.random()<.5;
+  const q=`x³ ${plus?'+':'−'} ${n**3} を因数分解すると？`;
+  const ans=plus?`(x + ${n})(x² − ${n}x + ${n*n})`:`(x − ${n})(x² + ${n}x + ${n*n})`;
+  return {q,a:ans,opts:uniqueOptions(ans,[`(x ${plus?'−':'+'} ${n})(x² ${plus?'+':'−'} ${n}x + ${n*n})`,`(x ${plus?'+':'−'} ${n})(x² + ${n}x + ${n*n})`,`(x ${plus?'+':'−'} ${n})(x² − ${n}x − ${n*n})`])};
+}
+let seenQuestions = new Set();
+function makeQuestion() {
+  let q;
+  do { q=generateQuestion(); } while(seenQuestions.has(q.q));
+  seenQuestions.add(q.q);
+  return q;
+}
+function todayKey() { const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+function updateDailyAvailability() {
+  const history=read('koharu_daily_history',{}); const completed=!!history[todayKey()] || read('koharu_daily_attempt', '')===todayKey();
+  $('dailyStart').disabled=completed;
+  $('dailyStart').querySelector('span').innerHTML=completed?'本日の挑戦は終了しました<br>また明日挑戦してね':'1日1回の挑戦！<br>問題数を選んで記録に挑もう';
+  $('dailyStatus').textContent=completed?'今日はすでに挑戦済みです。次の挑戦は明日！':'1日1回、今日の挑戦に取り組もう！';
+  $('dailyBegin').disabled=completed;
+}
+function startGame(which) { mode=which; questionIndex=0; correctCount=0; challengeStreak=0; seenQuestions=new Set(); if(which==='daily') { dailyTotal=Number($('dailyQuestionRange').value); dailyStartedAt=Date.now(); write('koharu_daily_attempt',todayKey()); } showScreen('play'); $('modeName').textContent=mode==='daily'?'デイリーモード':'チャレンジモード'; nextQuestion(); }
+function nextQuestion() {
+  answered=false; currentQuestion=makeQuestion(); $('question').textContent=currentQuestion.q; $('feedback').textContent=''; $('nextRow').classList.add('hidden');
+  $('questionCount').textContent = mode==='daily' ? `第 ${questionIndex+1} 問 / ${dailyTotal} 問` : `第 ${questionIndex+1} 問`;
+  const holder=$('choices'); holder.innerHTML='';
+  currentQuestion.opts.forEach(option=>{ const b=document.createElement('button'); b.className='choice'; b.textContent=option; b.addEventListener('click',()=>chooseAnswer(b,option)); holder.appendChild(b); });
+}
+function chooseAnswer(button, option) {
+  if(answered) return; answered=true;
+  const buttons=[...$('choices').querySelectorAll('button')];
+  buttons.forEach(b=>{ b.disabled=true; if(b.textContent===currentQuestion.a) b.classList.add('correct'); });
+  if(option===currentQuestion.a) {
+    button.classList.add('correct'); $('feedback').textContent='正解！';
+    if(mode==='daily') correctCount++; else challengeStreak++;
+  } else {
+    button.classList.add('wrong'); $('feedback').textContent='不正解…';
+  }
+  if(mode==='challenge' && option!==currentQuestion.a) {
+    setTimeout(finishChallenge, 650);
+    return;
+  }
+  $('nextRow').classList.remove('hidden');
+  $('nextButton').textContent = mode==='daily' && questionIndex===dailyTotal-1 ? '結果を見る' : '次の問題へ';
+}
+function advance() {
+  questionIndex++;
+  if(mode==='daily' && questionIndex>=dailyTotal) finishDaily(); else nextQuestion();
+}
+function finishDaily() {
+  $('dailySetup').classList.add('hidden');
+  const now=new Date(); const score=correctCount; const history=read('koharu_daily_history',{});
+  const key=`${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+  const elapsedSeconds=(Date.now()-dailyStartedAt)/1000;
+  history[key]={score,total:dailyTotal,time:elapsedSeconds}; write('koharu_daily_history',history);
+  $('dailyDateHeading').textContent=`${now.getMonth()+1}月${now.getDate()}日の成績`;
+  $('dailyScore').textContent=score; $('dailyTotal').textContent=dailyTotal; $('dailyPercent').textContent=Math.round(score/dailyTotal*100); $('dailyTime').textContent=formatTime(elapsedSeconds);
+  $('dailyRecord').textContent=score; $('dailyRecordSuffix').textContent=` / ${dailyTotal}問`; $('dailyRecordTime').textContent=`タイム ${formatTime(elapsedSeconds)}`; showScreen('dailyResult'); updateDailyAvailability();
+}
+function finishChallenge() {
+  const best=read('koharu_challenge_best',0); const updated=challengeStreak>best;
+  const newBest=Math.max(best,challengeStreak); write('koharu_challenge_best',newBest);
+  $('challengeHeading').textContent=updated?'新記録！':'今回の記録';
+  $('challengeScore').textContent=challengeStreak; $('bestScore').textContent=newBest;
+  $('challengeRecord').textContent=newBest; showScreen('challengeResult');
+}
+function refreshRecords() {
+  const history=read('koharu_daily_history',{}); const dates=Object.keys(history).sort((a,b)=>b.localeCompare(a));
+  $('dailyRecord').textContent=dates.length?history[dates[0]].score:'--';
+  $('dailyRecordSuffix').textContent=dates.length?` / ${history[dates[0]].total}問`:' / --問';
+  $('dailyRecordTime').textContent=dates.length && Number.isFinite(history[dates[0]].time)?`タイム ${formatTime(history[dates[0]].time)}`:'タイム --';
+  $('challengeRecord').textContent=read('koharu_challenge_best',0);
+}
+$('dailyStart').addEventListener('click',()=>{ updateDailyAvailability(); $('dailySetup').classList.toggle('hidden'); });
+$('dailyQuestionRange').addEventListener('input',e=>{ $('dailyQuestionValue').textContent=e.target.value; });
+$('dailyBegin').addEventListener('click',()=>{ if(read('koharu_daily_history',{})[todayKey()] || read('koharu_daily_attempt', '')===todayKey()) { updateDailyAvailability(); return; } startGame('daily'); });
+$('challengeStart').addEventListener('click',()=>startGame('challenge'));
+$('nextButton').addEventListener('click',advance);
+$('dailyHome').addEventListener('click',()=>{refreshRecords();showScreen('home');});
+$('challengeHome').addEventListener('click',()=>{refreshRecords();showScreen('home');});
+$('challengeAgain').addEventListener('click',()=>startGame('challenge'));
+const today=new Date(); $('todayDate').textContent=`${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+refreshRecords(); updateDailyAvailability();
+</script>
+</body>
+</html>
